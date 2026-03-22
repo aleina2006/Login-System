@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            /* Vintage Light Brown Background */
+            background-color: #c2a382; 
+            background-image: url("https://www.transparenttextures.com/patterns/old-map.png");
+            color: #2c1b0e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+      .auth-container {
+            /* Light Vintage Parchment Color */
+            background-color: #f5f5dc; 
+            padding: 40px;
+            /* Darker border to make the light card pop */
+            border: 3px double #5d4037; 
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Update h2 and labels to be darker so they are readable on the light background */
+        h2 {
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            color: #2c1b0e; 
+            text-transform: uppercase;
+            border-bottom: 1px solid #8b7355;
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #5d4037;
+            font-weight: bold;
+        }
+
+        .input-box {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.80rem;
+            margin-bottom: 8px;
+            color: #8b7355;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: #594734;
+            border: 1px solid #4a3728;
+            color: #f5deb3;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input::placeholder {
+            color: #efe6e3;
+        }
+
+        input:focus {
+            border-color: #d2b48c;
+            outline: none;
+            background-color: #1a0f06;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #4a3728;
+            border: 1px solid #8b7355;
+            color: #f5deb3;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #5d4037;
+            border-color: #d2b48c;
+        }
+
+        button:disabled {
+            background-color: #1a0f06;
+            color: #4a3728;
+            cursor: not-allowed;
+        }
+
+        .status-msg {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            padding: 10px;
+            display: none;
+        }
+
+        .error { color: #ff6b6b; border: 1px solid #ff6b6b; display: block; }
+        
+        .toggle-link {
+            margin-top: 25px;
+            font-size: 0.75rem;
+            color: #8b7355;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .hidden { display: none !important; }
+
+        .stat-item { 
+            background: #594734; 
+            padding: 15px; 
+            border: 1px solid #4a3728;
+            margin-bottom: 15px;
+            text-align: left;
+            color: #d2b48c;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-section" class="auth-container">
+        <h2> Login</h2>
+        <div class="input-box">
+            <label>USERNAME</label>
+            <input type="text" id="l-user" placeholder="Enter Username [5-15]">
+        </div>
+        <div class="input-box">
+            <label>PASSWORD</label>
+            <input type="password" id="l-pass" placeholder="Enter Key [min 8]">
+        </div>
+        <button id="login-btn" onclick="processLogin()">Login</button>
+        <div id="login-msg" class="status-msg"></div>
+        <div class="toggle-link" onclick="switchView('reg-section')">Not a member? <span>Register</span></div>
+    </div>
+
+    <div id="reg-section" class="auth-container hidden">
+        <h2>New Record</h2>
+        <div class="input-box">
+            <label>ASSIGN USERNAME</label>
+            <input type="text" id="r-user" placeholder="5-15 characters">
+        </div>
+        <div class="input-box">
+            <label>ASSIGN PASSWORD</label>
+            <input type="password" id="r-pass" placeholder="Min 8 characters">
+        </div>
+        <button onclick="processRegister()">Save Entry</button>
+        <div class="toggle-link" onclick="switchView('login-section')">Back to Login</div>
+    </div>
+
+    <div id="dash-section" class="auth-container hidden">
+        <h2>Terminal Active</h2>
+        <p style="color: #6c5f54;">Welcome, <span id="display-user"></span></p>
+        <div class="stat-item">Connection: <b style="color: #00ff88;">STABLE</b></div>
+        <div class="stat-item">Security: <b style="color: #00ff88;">HIGH</b></div>
+        <button style="margin-top: 20px;" onclick="logout()">Terminate</button>
+    </div>
+
+    <script>
+        let db = []; 
+        let attempts = 0;
+        const LIMIT = 3; 
+
+        function switchView(id) {
+            document.querySelectorAll('.auth-container').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function processRegister() {
+            const u = document.getElementById('r-user').value;
+            const p = document.getElementById('r-pass').value;
+            if (u.length < 5 || u.length > 15) { alert("Error: Username 5-15 chars."); return; }
+            if (p.length < 8) { alert("Error: Password min 8 chars."); return; }
+            db.push({ username: u, password: p });
+            alert("Record Saved.");
+            switchView('login-section');
+        }
+
+        function processLogin() {
+            const u = document.getElementById('l-user').value;
+            const p = document.getElementById('l-pass').value;
+            const msg = document.getElementById('login-msg');
+            const btn = document.getElementById('login-btn');
+            const userFound = db.find(x => x.username === u && x.password === p);
+
+            if (userFound) {
+                attempts = 0;
+                document.getElementById('display-user').innerText = u;
+                switchView('dash-section');
+            } else {
+                attempts++;
+                msg.className = "status-msg error";
+                if (attempts >= LIMIT) {
+                    msg.innerText = "LOCKED: 3 Failed Attempts.";
+                    btn.disabled = true;
+                } else {
+                    msg.innerText = `Denied. Attempt ${attempts}/${LIMIT}.`;
+                }
+            }
+        }
+
+        function logout() {
+            attempts = 0;
+            document.getElementById('login-btn').disabled = false;
+            document.getElementById('login-msg').className = "status-msg";
+            document.getElementById('l-user').value = "";
+            document.getElementById('l-pass').value = "";
+            switchView('login-section');
+        }
+    </script>
+</body>
+</html>
